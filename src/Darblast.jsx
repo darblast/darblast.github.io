@@ -15,6 +15,7 @@ import {
 } from 'react-bootstrap';
 
 import Canvas from './Canvas.jsx';
+import LayerControls from './LayerControls.jsx';
 
 
 export default function () {
@@ -48,16 +49,7 @@ export default function () {
         <Col sm="auto" className="d-flex align-items-stretch">
           <Card className="rounded-0 border-top-0 border-right-0 border-bottom-0 shadow-sm">
             <Card.Body className="p-2">
-              <Card className="shadow-sm">
-                <Card.Header className="p-2">Layers</Card.Header>
-                <Card.Body className="p-2">
-                  <ButtonGroup>
-                    <Button size="sm"><i className="fas fa-plus"></i></Button>
-                    <Button size="sm" disabled><i className="fas fa-cog"></i></Button>
-                    <Button size="sm" disabled><i className="fas fa-trash"></i></Button>
-                  </ButtonGroup>
-                </Card.Body>
-              </Card>
+              <LayerControls/>
               <Card className="shadow-sm">
                 <Card.Header className="p-2">Planes</Card.Header>
                 <Card.Body className="p-2">
