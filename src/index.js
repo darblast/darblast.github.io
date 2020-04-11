@@ -1,12 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import App from './App.jsx';
+import Darblast from './Darblast.jsx';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <Darblast/>
   </React.StrictMode>,
   document.getElementById('root')
 );
