@@ -2,7 +2,6 @@ import React from 'react';
 
 import {
   Button,
-  ButtonGroup,
   Card,
   Col,
   Container,
@@ -34,7 +33,7 @@ export default function () {
         <Col sm="auto" className="d-flex align-items-stretch">
           <Card className="rounded-0 border-top-0 border-left-0 border-bottom-0 shadow-sm">
             <Card.Body className="p-2">
-              <ToggleButtonGroup vertical type="radio" name="tool" defaultValue="pan">
+              <ToggleButtonGroup vertical className="shadow-sm" type="radio" name="tool" defaultValue="pan">
                 <ToggleButton size="lg" value="pan"><i className="fas fa-hand-paper"></i></ToggleButton>
                 <ToggleButton size="lg" value="stamp"><i className="fas fa-stamp"></i></ToggleButton>
                 <ToggleButton size="lg" value="fill"><i className="fas fa-fill-drip"></i></ToggleButton>
@@ -51,13 +50,15 @@ export default function () {
             <Card.Body className="p-2">
               <LayerControls/>
               <Card className="shadow-sm">
-                <Card.Header className="p-2">Planes</Card.Header>
+                <Container as={Card.Header} className="p-2">
+                  <Row>
+                    <Col>Planes</Col>
+                    <Col cs="auto">
+                      <Button size="sm"><i className="fas fa-plus"></i></Button>
+                    </Col>
+                  </Row>
+                </Container>
                 <Card.Body className="p-2">
-                  <ButtonGroup>
-                    <Button size="sm"><i className="fas fa-plus"></i></Button>
-                    <Button size="sm" disabled><i className="fas fa-cog"></i></Button>
-                    <Button size="sm" disabled><i className="fas fa-trash"></i></Button>
-                  </ButtonGroup>
                 </Card.Body>
               </Card>
             </Card.Body>
