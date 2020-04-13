@@ -1,19 +1,19 @@
 import React from 'react';
 
 
-class SchemaCanvas extends React.Component {
+class ProjectionSchema extends React.Component {
   constructor(props) {
     super(props);
     this.canvas = React.createRef();
     this.state = {
       matrix: props.matrix,
+      metrics: this.getMetrics(props.matrix),
       context: null,
     };
     this.paint = this.paint.bind(this);
   }
 
-  getMetrics() {
-    const m = this.state.matrix;
+  getMetrics(matrix) {
     const points = [
       [0, 0, 0],
       [0, 0, 1],
@@ -24,28 +24,24 @@ class SchemaCanvas extends React.Component {
       [1, 1, 0],
       [1, 1, 1],
     ].map(([i, j, k]) => [
-      i * m[0][0] + j * m[0][1] + k * m[0][2],
-      i * m[1][0] + j * m[1][1] + k * m[1][2],
+      i * matrix[0][0] + j * matrix[0][1] + k * matrix[0][2],
+      i * matrix[1][0] + j * matrix[1][1] + k * matrix[1][2],
     ]);
     const x = points.map(([x, y]) => x);
     const y = points.map(([x, y]) => y);
-    return [
-      Math.min.apply(Math, x),
-      Math.min.apply(Math, y),
-      Math.max.apply(Math, x),
-      Math.max.apply(Math, y),
-    ];
-  }
-
-  getSize() {
-    const [x0, y0, x1, y1] = this.getMetrics();
-    return [x1 - x0 + 100, y1 - y0 + 100];
+    const x0 = Math.min.apply(Math, x);
+    const y0 = Math.min.apply(Math, y);
+    const x1 = Math.max.apply(Math, x);
+    const y1 = Math.max.apply(Math, y);
+    const width = x1 - x0 + 101;
+    const height = y1 - y0 + 101;
+    return {x0, y0, x1, y1, width, height};
   }
 
   componentDidMount() {
     const context = this.canvas.current.getContext('2d');
-    const [x0, y0] = this.getMetrics();
-    context.setTransform(1, 0, 0, 1, 50 - x0, 50 - y0);
+    context.setTransform(1, 0, 0, 1, 75, 75);
+    context.fillStyle = '#FFFFFF';
     this.setState({context});
     window.requestAnimationFrame(this.paint);
   }
@@ -90,7 +86,7 @@ class SchemaCanvas extends React.Component {
   paint() {
     const context = this.state.context;
     if (context) {
-      context.clearRect(0, 0, 100, 100);
+      context.fillRect(-75, -75, 150, 150);
       context.lineWidth = 1;
       this.drawAxis(1, 0, 0);
       this.drawAxis(0, 1, 0);
@@ -115,16 +111,15 @@ class SchemaCanvas extends React.Component {
   }
 
   render() {
-    const [width, height] = this.getSize();
     return (
-      <canvas ref={this.canvas} width={width} height={height} style={{
+      <canvas ref={this.canvas} width="150" height="150" style={{
         border: '1px solid black',
-        width: `${width}px`,
-        height: `${height}px`,
+        width: `150px`,
+        height: `150px`,
       }}></canvas>
     );
   }
 }
 
 
-export default SchemaCanvas;
+export default ProjectionSchema;

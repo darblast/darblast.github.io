@@ -9,7 +9,7 @@ import {
   Row,
 } from 'react-bootstrap';
 
-import SchemaCanvas from './SchemaCanvas.jsx';
+import ProjectionSchema from './ProjectionSchema.jsx';
 
 
 export default function ({onCancel}) {
@@ -25,7 +25,7 @@ export default function ({onCancel}) {
       [1, 1, 1],
     ],
   };
-  const [matrix, setMatrix] = useState(preset.orthogonal);
+  const [matrix, setMatrix] = useState(preset.isometric);
   const setCell = (i, j, value) => {
     matrix[i][j] = value;
     setMatrix(matrix);
@@ -58,7 +58,7 @@ export default function ({onCancel}) {
           </Row>
           <Row>
             <Col xs="auto">
-              <SchemaCanvas matrix={matrix}/>
+              <ProjectionSchema matrix={matrix}/>
             </Col>
             <Col xs="auto">
               <Container className="p-0">
