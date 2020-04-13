@@ -13,11 +13,19 @@ import SchemaCanvas from './SchemaCanvas.jsx';
 
 
 export default function ({onCancel}) {
-  const [matrix, setMatrix] = useState([
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ]);
+  const preset = {
+    orthogonal: [
+      [48, 0, 0],
+      [0, 48, 0],
+      [0, 0, 1],
+    ],
+    isometric: [
+      [-48, 48, 0],
+      [24, 24, -48],
+      [1, 1, 1],
+    ],
+  };
+  const [matrix, setMatrix] = useState(preset.orthogonal);
   const setCell = (i, j, value) => {
     matrix[i][j] = value;
     setMatrix(matrix);
@@ -32,15 +40,25 @@ export default function ({onCancel}) {
           <Row>
             <Col>
               <Form>
-                <Form.Group>
-                  <Form.Control></Form.Control>
+                <Form.Group as={Row}>
+                  <Form.Label column sm="2">Preset</Form.Label>
+                  <Col sm="10">
+                    <Form.Control
+                      as="select"
+                      defaultValue="orthogonal"
+                      onChange={event => setMatrix(preset[event.target.value])}
+                    >
+                      <option value="orthogonal">Orthogonal</option>
+                      <option value="isometric">Isometric</option>
+                    </Form.Control>
+                  </Col>
                 </Form.Group>
               </Form>
             </Col>
           </Row>
           <Row>
             <Col xs="auto">
-              <SchemaCanvas/>
+              <SchemaCanvas matrix={matrix}/>
             </Col>
             <Col xs="auto">
               <Container className="p-0">
