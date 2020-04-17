@@ -154,8 +154,8 @@ class ProjectionSchema extends React.Component {
         }}></canvas>
         <div
           ref={this.grippers.i}
-          onMouseDown={e => this.setIGripperDragging(true)}
-          onMouseUp={e => this.setIGripperDragging(false)}
+          onMouseDown={() => this.setIGripperDragging(true)}
+          onMouseUp={() => this.setIGripperDragging(false)}
           style={{
             color: '#f00',
             position: 'absolute',
@@ -165,8 +165,8 @@ class ProjectionSchema extends React.Component {
         }}></i></div>
         <div
           ref={this.grippers.j}
-          onMouseDown={e => this.setJGripperDragging(true)}
-          onMouseUp={e => this.setJGripperDragging(false)}
+          onMouseDown={() => this.setJGripperDragging(true)}
+          onMouseUp={() => this.setJGripperDragging(false)}
           style={{
             color: '#0f0',
             position: 'absolute',
@@ -176,8 +176,8 @@ class ProjectionSchema extends React.Component {
         }}></i></div>
         <div
           ref={this.grippers.k}
-          onMouseDown={e => this.setKGripperDragging(true)}
-          onMouseUp={e => this.setKGripperDragging(false)}
+          onMouseDown={() => this.setKGripperDragging(true)}
+          onMouseUp={() => this.setKGripperDragging(false)}
           style={{
             color: '#00f',
             position: 'absolute',
