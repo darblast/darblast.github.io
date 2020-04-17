@@ -12,6 +12,11 @@ import {
 import ProjectionSchema from './ProjectionSchema.jsx';
 
 
+function cloneMatrix(matrix) {
+  return matrix.map(row => row.slice());
+}
+
+
 export default function ({onCancel}) {
   const preset = {
     orthogonal: [
@@ -25,10 +30,13 @@ export default function ({onCancel}) {
       [1, 1, 1],
     ],
   };
-  const [matrix, setMatrix] = useState(preset.isometric);
+  const [matrix, setMatrix] = useState(preset.orthogonal);
   const setCell = (i, j, value) => {
-    matrix[i][j] = value;
-    setMatrix(matrix);
+    if (!isNaN(value)) {
+      const newMatrix = cloneMatrix(matrix);
+      newMatrix[i][j] = value;
+      setMatrix(newMatrix);
+    }
   };
   return (
     <Modal show onHide={onCancel}>
@@ -71,7 +79,7 @@ export default function ({onCancel}) {
                           name={`m${i}${j}`}
                           value={cell}
                           required
-                          onChange={event => setCell(i, j, event.target.value)}
+                          onChange={event => setCell(i, j, parseInt(event.target.value, 10))}
                           style={{width: '3em'}}/>
                       </Col>
                     ))}

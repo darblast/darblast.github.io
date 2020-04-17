@@ -6,36 +6,9 @@ class ProjectionSchema extends React.Component {
     super(props);
     this.canvas = React.createRef();
     this.state = {
-      matrix: props.matrix,
-      metrics: this.getMetrics(props.matrix),
       context: null,
     };
     this.paint = this.paint.bind(this);
-  }
-
-  getMetrics(matrix) {
-    const points = [
-      [0, 0, 0],
-      [0, 0, 1],
-      [0, 1, 0],
-      [0, 1, 1],
-      [1, 0, 0],
-      [1, 0, 1],
-      [1, 1, 0],
-      [1, 1, 1],
-    ].map(([i, j, k]) => [
-      i * matrix[0][0] + j * matrix[0][1] + k * matrix[0][2],
-      i * matrix[1][0] + j * matrix[1][1] + k * matrix[1][2],
-    ]);
-    const x = points.map(([x, y]) => x);
-    const y = points.map(([x, y]) => y);
-    const x0 = Math.min.apply(Math, x);
-    const y0 = Math.min.apply(Math, y);
-    const x1 = Math.max.apply(Math, x);
-    const y1 = Math.max.apply(Math, y);
-    const width = x1 - x0 + 101;
-    const height = y1 - y0 + 101;
-    return {x0, y0, x1, y1, width, height};
   }
 
   componentDidMount() {
@@ -53,7 +26,8 @@ class ProjectionSchema extends React.Component {
   }
 
   drawAxis(i, j, k) {
-    const {matrix, context} = this.state;
+    const matrix = this.props.matrix;
+    const context = this.state.context;
     context.moveTo(0, 0);
     const x = i * matrix[0][0] + j * matrix[0][1] + k * matrix[0][2];
     const y = i * matrix[1][0] + j * matrix[1][1] + k * matrix[1][2];
@@ -74,7 +48,8 @@ class ProjectionSchema extends React.Component {
   }
 
   drawLine(i0, j0, k0, i1, j1, k1) {
-    const {matrix, context} = this.state;
+    const matrix = this.props.matrix;
+    const context = this.state.context;
     context.moveTo(
         i0 * matrix[0][0] + j0 * matrix[0][1] + k0 * matrix[0][2],
         i0 * matrix[1][0] + j0 * matrix[1][1] + k0 * matrix[1][2]);
@@ -86,7 +61,8 @@ class ProjectionSchema extends React.Component {
   paint() {
     const context = this.state.context;
     if (context) {
-      context.fillRect(-75, -75, 150, 150);
+      context.clearRect(-75, -75, 150, 150);
+      context.beginPath();
       context.lineWidth = 1;
       this.drawAxis(1, 0, 0);
       this.drawAxis(0, 1, 0);
@@ -106,7 +82,7 @@ class ProjectionSchema extends React.Component {
       this.drawLine(0, 1, 0, 0, 1, 1);
       this.drawLine(1, 1, 0, 1, 1, 1);
       context.stroke();
-      // window.requestAnimationFrame(this.paint);
+      window.requestAnimationFrame(this.paint);
     }
   }
 
