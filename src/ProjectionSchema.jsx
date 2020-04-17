@@ -5,10 +5,21 @@ class ProjectionSchema extends React.Component {
   constructor(props) {
     super(props);
     this.canvas = React.createRef();
+    this.grippers = {
+      i: React.createRef(),
+      j: React.createRef(),
+      k: React.createRef(),
+    };
     this.state = {
       context: null,
+      dragging: {
+        i: false,
+        j: false,
+        k: false,
+      },
     };
     this.paint = this.paint.bind(this);
+    this.drag = this.drag.bind(this);
   }
 
   componentDidMount() {
@@ -19,9 +30,46 @@ class ProjectionSchema extends React.Component {
     window.requestAnimationFrame(this.paint);
   }
 
+  componentDidUpdate() {
+    const matrix = this.props.matrix;
+    this.grippers.i.current.style.left = `${matrix[0][0] + 75}px`;
+    this.grippers.i.current.style.top = `${matrix[1][0] + 75}px`;
+    this.grippers.j.current.style.left = `${matrix[0][1] + 75}px`;
+    this.grippers.j.current.style.top = `${matrix[1][1] + 75}px`;
+    this.grippers.k.current.style.left = `${matrix[0][2] + 75}px`;
+    this.grippers.k.current.style.top = `${matrix[1][2] + 75}px`;
+  }
+
   componentWillUnmount() {
     this.setState({
       context: null,
+    });
+  }
+
+  setIGripperDragging(dragging) {
+    this.setState({
+      dragging: {
+        ...this.state.dragging,
+        i: dragging,
+      }
+    });
+  }
+
+  setJGripperDragging(dragging) {
+    this.setState({
+      dragging: {
+        ...this.state.dragging,
+        j: dragging,
+      }
+    });
+  }
+
+  setKGripperDragging(dragging) {
+    this.setState({
+      dragging: {
+        ...this.state.dragging,
+        k: dragging,
+      }
     });
   }
 
@@ -86,13 +134,58 @@ class ProjectionSchema extends React.Component {
     }
   }
 
+  drag(event) {
+    // TODO
+  }
+
   render() {
     return (
-      <canvas ref={this.canvas} width="150" height="150" style={{
-        border: '1px solid black',
-        width: `150px`,
-        height: `150px`,
-      }}></canvas>
+      <div onMouseMove={this.drag} style={{
+        position: 'relative',
+        width: '150px',
+        height: '150px',
+        overflow: 'hidden',
+      }}>
+        <canvas ref={this.canvas} width="150" height="150" style={{
+          position: 'absolute',
+          border: '1px solid black',
+          width: `150px`,
+          height: `150px`,
+        }}></canvas>
+        <div
+          ref={this.grippers.i}
+          onMouseDown={e => this.setIGripperDragging(true)}
+          onMouseUp={e => this.setIGripperDragging(false)}
+          style={{
+            color: '#f00',
+            position: 'absolute',
+          }}
+        ><i className="fas fa-circle" style={{
+          margin: '-50% 0 0 -50%',
+        }}></i></div>
+        <div
+          ref={this.grippers.j}
+          onMouseDown={e => this.setJGripperDragging(true)}
+          onMouseUp={e => this.setJGripperDragging(false)}
+          style={{
+            color: '#0f0',
+            position: 'absolute',
+          }}
+        ><i className="fas fa-circle" style={{
+          margin: '-50% 0 0 -50%',
+        }}></i></div>
+        <div
+          ref={this.grippers.k}
+          onMouseDown={e => this.setKGripperDragging(true)}
+          onMouseUp={e => this.setKGripperDragging(false)}
+          style={{
+            color: '#00f',
+            position: 'absolute',
+          }}
+        ><i className="fas fa-circle" style={{
+          margin: '-50% 0 0 -50%',
+        }}></i></div>
+      </div>
     );
   }
 }
