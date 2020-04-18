@@ -48,7 +48,7 @@ var Darblast;
 })(Darblast || (Darblast = {})); // namespace Darblast
 const Frame = Darblast.Frame;
 const Canvas = Darblast.Canvas;
-/// <reference path="Graphics.ts" />
+/// <reference path="Base.ts" />
 var Darblast;
 (function (Darblast) {
     class Animation {
@@ -104,38 +104,6 @@ var Darblast;
     Darblast.Character = Character;
 })(Darblast || (Darblast = {})); // namespace Darblast
 const Character = Darblast.Character;
-var Darblast;
-(function (Darblast) {
-    class View {
-        constructor(matrix) {
-            this.x = 0;
-            this.y = 0;
-            if (matrix.length !== 3 || matrix.some(row => row.length !== 3)) {
-                throw Error('invalid matrix size, must be 3x3');
-            }
-            this.matrix = matrix;
-        }
-    }
-    Darblast.View = View;
-})(Darblast || (Darblast = {})); // namespace Darblast
-const View = Darblast.View;
-class IdGenerator {
-    constructor() {
-        this._nextId = 0;
-        this._stash = [];
-    }
-    claim() {
-        if (this._stash.length > 0) {
-            return this._stash.pop();
-        }
-        else {
-            return this._nextId++;
-        }
-    }
-    release(id) {
-        this._stash.push(id);
-    }
-}
 var Darblast;
 (function (Darblast) {
     class Heap {
@@ -214,6 +182,88 @@ var Darblast;
     Darblast.Heap = Heap;
 })(Darblast || (Darblast = {})); // namespace Darblast
 const Heap = Darblast.Heap;
+/// <reference path="Base.ts" />
+/// <reference path="Heap.ts" />
+class Database {
+    constructor() {
+        this._data = Object.create(null);
+    }
+    static _compare(first, second) {
+        return first.id < second.id;
+    }
+    insert(properties, element) {
+        for (var key in properties) {
+            if (properties.hasOwnProperty(key)) {
+                if (!(key in this._data)) {
+                    this._data[key] = Object.create(null);
+                }
+                const value = properties[key];
+                if (!(value in this._data[key])) {
+                    this._data[key][value] = new Heap(Database._compare);
+                }
+                this._data[key][value].push(element);
+            }
+        }
+    }
+    remove(properties) {
+        // TODO
+        throw new Error('not implemented');
+    }
+    query(properties) {
+        const queues = [];
+        for (var key in properties) {
+            if (properties.hasOwnProperty(key) && (key in this._data)) {
+                const value = properties[key];
+                if (value in this._data[key]) {
+                    queues.push(this._data[key][value]);
+                }
+            }
+        }
+        const result = [];
+        // TODO
+        return result;
+    }
+}
+var Darblast;
+(function (Darblast) {
+    class View {
+        constructor(matrix, width, height) {
+            this.x = 0;
+            this.y = 0;
+            if (matrix.length !== 3 || matrix.some(row => row.length !== 3)) {
+                throw Error('invalid matrix size, must be 3x3');
+            }
+            this.matrix = matrix;
+            this.width = width;
+            this.height = height;
+        }
+        project(projectable) {
+            const m = this.matrix;
+            projectable.x = projectable.i * m[0][0] + projectable.j * m[0][1] + projectable.k * m[0][2];
+            projectable.y = projectable.i * m[1][0] + projectable.j * m[1][1] + projectable.k * m[1][2];
+            projectable.z = projectable.i * m[2][0] + projectable.j * m[2][1] + projectable.k * m[2][2];
+        }
+    }
+    Darblast.View = View;
+})(Darblast || (Darblast = {})); // namespace Darblast
+const View = Darblast.View;
+class IdGenerator {
+    constructor() {
+        this._nextId = 0;
+        this._stash = [];
+    }
+    claim() {
+        if (this._stash.length > 0) {
+            return this._stash.pop();
+        }
+        else {
+            return this._nextId++;
+        }
+    }
+    release(id) {
+        this._stash.push(id);
+    }
+}
 /// <reference path="IdGenerator.ts" />
 /// <reference path="View.ts" />
 /// <reference path="Character.ts" />
@@ -247,11 +297,9 @@ class ElementImpl {
     }
     set state(value) {
         if (value in this.character.animations) {
-            const currentAnimation = this.animation;
+            const currentState = this._state;
             this._state = value;
-            const nextAnimation = this.animation;
-            if (nextAnimation.width !== currentAnimation.width ||
-                nextAnimation.height !== currentAnimation.height) {
+            if (value !== currentState) {
                 this._project();
             }
         }
@@ -262,12 +310,9 @@ class ElementImpl {
     get animation() {
         return this.character.animations[this._state];
     }
-    _project() {
-        this._tree.remove(this);
+    _reindex() {
         const animation = this.animation;
-        var m = this._tree.view.matrix;
-        this._x = animation.x0 + this._i * m[0][0] + this._j * m[0][1] + this._k * m[0][2];
-        this._y = animation.y0 + this._i * m[1][0] + this._j * m[1][1] + this._k * m[1][2];
+        this._tree.remove(this);
         const width = animation.width;
         const height = animation.height;
         const x0 = this._x;
@@ -286,8 +331,15 @@ class ElementImpl {
         this._y0 = Math.min(y00, y01, y10, y11);
         this._x1 = Math.max(x00, x01, x10, x11);
         this._y1 = Math.max(y00, y01, y10, y11);
-        this._z = this._i * m[2][0] + this._j * m[2][1] + this._k * m[2][2];
         this._tree.insert(this);
+    }
+    _project() {
+        const animation = this.animation;
+        var m = this._tree.view.matrix;
+        this._x = animation.x0 + this._i * m[0][0] + this._j * m[0][1] + this._k * m[0][2];
+        this._y = animation.y0 + this._i * m[1][0] + this._j * m[1][1] + this._k * m[1][2];
+        this._z = this._i * m[2][0] + this._j * m[2][1] + this._k * m[2][2];
+        this._reindex();
     }
     get i() {
         return this._i;
@@ -356,6 +408,7 @@ class ElementImpl {
         this._m10 = m10;
         this._m11 = m11;
         this._m12 = m12;
+        this._reindex();
     }
     transform(m00, m01, m02, m10, m11, m12) {
         this._m00 = this._m00 * m00 + this._m01 * m10;
@@ -364,6 +417,7 @@ class ElementImpl {
         this._m10 = this._m10 * m00 + this._m11 * m10;
         this._m11 = this._m10 * m01 + this._m11 * m11;
         this._m12 = this._m10 * m02 + this._m11 * m12 + this._m12;
+        this._reindex();
     }
     resetTransform() {
         this._m00 = 1;
@@ -372,6 +426,7 @@ class ElementImpl {
         this._m10 = 0;
         this._m11 = 1;
         this._m12 = 0;
+        this._reindex();
     }
     getFrame(t) {
         return this.animation.getFrame(this._timestamp, t);
@@ -502,7 +557,7 @@ class ElementTree {
         this._renderContext = new RenderContext();
         this.view = view;
     }
-    _compare(first, second) {
+    static _compare(first, second) {
         if (first.x0 < second.x0) {
             return -1;
         }
@@ -566,7 +621,7 @@ class ElementTree {
     }
     _insert(root, element) {
         if (root) {
-            const cmp = this._compare(root, element);
+            const cmp = ElementTree._compare(root, element);
             if (cmp < 0) {
                 root.leftChild = this._insert(root.leftChild, element);
                 return this._rebalanceHeavyLeft(root);
@@ -591,7 +646,7 @@ class ElementTree {
     }
     _remove(root, element) {
         if (root) {
-            const cmp = this._compare(root, element);
+            const cmp = ElementTree._compare(root, element);
             if (cmp < 0) {
                 root.leftChild = this._remove(root.leftChild, element);
                 return this._rebalanceHeavyRight(root);
@@ -625,12 +680,34 @@ var Darblast;
 (function (Darblast) {
     class ElementManager {
         constructor(view) {
-            this._characters = [];
+            this._database = new Database();
             this._view = view;
             this._elements = new ElementTree(view);
         }
+        spawn(character, state, i, j, k, properties = null) {
+            const element = new ElementImpl(this._elements, character, state, i, j, k);
+            if (properties) {
+                this._database.insert(properties, element);
+            }
+            return element;
+        }
+        spawnDefault(character, i, j, k, properties = null) {
+            return this.spawn(character, 'default', i, j, k);
+        }
+        query(properties) {
+            return this._database.query(properties);
+        }
+        queryFirst(properties) {
+            const elements = this.query(properties);
+            if (elements.length !== 1) {
+                throw new Error(`element not found for ${JSON.stringify(properties)}`);
+            }
+            else {
+                return elements[0];
+            }
+        }
         render(canvas, t, parallax) {
-            // TODO
+            this._elements.render(canvas.context, this._view.x * parallax.x, this._view.y * parallax.y, this._view.width, this._view.height, t);
         }
     }
     Darblast.ElementManager = ElementManager;
@@ -674,7 +751,7 @@ var Darblast;
 })(Darblast || (Darblast = {})); // namespace Darblast
 /// <reference path="View.ts" />
 /// <reference path="ElementManager.ts" />
-/// <reference path="Graphics.ts" />
+/// <reference path="Base.ts" />
 var Darblast;
 (function (Darblast) {
     class DefaultLayer {
@@ -695,6 +772,63 @@ var Darblast;
     }
     Darblast.DefaultLayer = DefaultLayer;
 })(Darblast || (Darblast = {})); // namespace Darblast
+const DefaultLayer = Darblast.DefaultLayer;
+/// <reference path="Base.ts" />
+/// <reference path="View.ts" />
+/// <reference path="Layer.ts" />
+var Darblast;
+(function (Darblast) {
+    class LayerManager {
+        constructor() {
+            this._layers = [];
+        }
+        get count() {
+            return this._layers.length;
+        }
+        _checkIndex(index) {
+            if (index < 0) {
+                throw new Error(`layer index cannot be negative`);
+            }
+            else if (index >= this._layers.length) {
+                throw new Error(`layer index out of bounds: ${index} > ${this._layers.length - 1}`);
+            }
+            else {
+                return index;
+            }
+        }
+        getAt(index) {
+            return this._layers[this._checkIndex(index)];
+        }
+        insert(layer, index) {
+            this._layers.splice(index, 0, layer);
+        }
+        insertDefault(view, index) {
+            this.insert(new Darblast.DefaultLayer(view), index);
+        }
+        insertAbove(layer) {
+            this.insert(layer, 0);
+        }
+        insertDefaultAbove(view) {
+            this.insert(new Darblast.DefaultLayer(view), 0);
+        }
+        insertBelow(layer) {
+            this.insert(layer, this._layers.length);
+        }
+        insertDefaultBelow(view) {
+            this.insert(new Darblast.DefaultLayer(view), this._layers.length);
+        }
+        removeAt(index) {
+            this._layers.splice(this._checkIndex(index), 1);
+        }
+        render(canvas, t) {
+            for (var i = 0; i < this._layers.length; i++) {
+                this._layers[i].render(canvas, t);
+            }
+        }
+    }
+    Darblast.LayerManager = LayerManager;
+})(Darblast || (Darblast = {})); // namespace Darblast
+const LayerManager = Darblast.LayerManager;
 var Darblast;
 (function (Darblast) {
     class Loader {
@@ -738,6 +872,33 @@ var Darblast;
         }
     }
     Darblast.Loader = Loader;
+})(Darblast || (Darblast = {})); // namespace Darblast
+/// <reference path="Base.ts" />
+/// <reference path="LayerManager.ts" />
+var Darblast;
+(function (Darblast) {
+    class RenderLoop {
+        constructor(canvasElement) {
+            this.layers = new Darblast.LayerManager();
+            this._running = false;
+            this._canvas = new Darblast.Canvas(canvasElement);
+            this.render = this.render.bind(this);
+        }
+        start() {
+            this._running = true;
+            window.requestAnimationFrame(this.render);
+        }
+        stop() {
+            this._running = false;
+        }
+        render(t) {
+            this.layers.render(this._canvas, t);
+            if (this._running) {
+                window.requestAnimationFrame(this.render);
+            }
+        }
+    }
+    Darblast.RenderLoop = RenderLoop;
 })(Darblast || (Darblast = {})); // namespace Darblast
 /// <reference path="Loader.ts" />
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
