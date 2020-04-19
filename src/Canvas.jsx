@@ -7,6 +7,10 @@ class Canvas extends React.Component {
     this.canvas = React.createRef();
   }
 
+  componentDidMount() {
+    this.props.onReady(this.canvas.current);
+  }
+
   render() {
     return (
       <canvas style={{

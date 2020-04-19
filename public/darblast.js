@@ -9,6 +9,174 @@
 }(this, function() {
 var Darblast;
 (function (Darblast) {
+    class Node {
+        constructor(key, value) {
+            this.height = 1;
+            this.left = null;
+            this.right = null;
+            this.key = key;
+            this.value = value;
+        }
+    }
+    class AVL {
+        constructor(compare) {
+            this._root = null;
+            this._size = 0;
+            this._compare = compare;
+        }
+        get size() {
+            return this._size;
+        }
+        _getHeight(node) {
+            if (node) {
+                return node.height;
+            }
+            else {
+                return 0;
+            }
+        }
+        get height() {
+            return this._getHeight(this._root);
+        }
+        lookup(key) {
+            var node = this._root;
+            while (node) {
+                const cmp = this._compare(key, node.key);
+                if (cmp < 0) {
+                    node = node.left;
+                }
+                else if (cmp > 0) {
+                    node = node.right;
+                }
+                else {
+                    return node.value;
+                }
+            }
+            return null;
+        }
+        contains(key) {
+            var node = this._root;
+            while (node) {
+                const cmp = this._compare(key, node.key);
+                if (cmp < 0) {
+                    node = node.left;
+                }
+                else if (cmp > 0) {
+                    node = node.right;
+                }
+                else {
+                    return true;
+                }
+            }
+            return false;
+        }
+        *_scan(node, lowerBound, upperBound) {
+            if (node) {
+                const cmpLower = lowerBound ? this._compare(node.key, lowerBound) : 1;
+                const cmpUpper = upperBound ? this._compare(node.key, upperBound) : -1;
+                if (cmpLower < 0) {
+                    yield* this._scan(node.right, lowerBound, upperBound);
+                }
+                else if (cmpUpper >= 0) {
+                    yield* this._scan(node.left, lowerBound, upperBound);
+                }
+                else {
+                    yield* this._scan(node.left, lowerBound, null);
+                    yield [node.key, node.value];
+                    yield* this._scan(node.right, null, upperBound);
+                }
+            }
+        }
+        scan(lowerBound, upperBound) {
+            return this._scan(this._root, lowerBound, upperBound);
+        }
+        [Symbol.iterator]() {
+            return this.scan(null, null);
+        }
+        _updateHeight(node) {
+            node.height = 1 + Math.max(this._getHeight(node.left), this._getHeight(node.right));
+        }
+        _rebalanceHeavyLeft(root) {
+            if (this._getHeight(root.left) > this._getHeight(root.right) + 1) {
+                const left = root.left;
+                root.left = left.right;
+                left.right = root;
+                this._updateHeight(root);
+                this._updateHeight(left);
+                return left;
+            }
+            else {
+                this._updateHeight(root);
+                return root;
+            }
+        }
+        _rebalanceHeavyRight(root) {
+            if (this._getHeight(root.right) > this._getHeight(root.left) + 1) {
+                const right = root.right;
+                root.right = right.left;
+                right.left = root;
+                this._updateHeight(root);
+                this._updateHeight(right);
+                return right;
+            }
+            else {
+                this._updateHeight(root);
+                return root;
+            }
+        }
+        _insert(node, key, value) {
+            if (node) {
+                const cmp = this._compare(key, node.key);
+                if (cmp < 0) {
+                    node.left = this._insert(node.left, key, value);
+                    return this._rebalanceHeavyLeft(node);
+                }
+                else if (cmp > 0) {
+                    node.right = this._insert(node.right, key, value);
+                    return this._rebalanceHeavyRight(node);
+                }
+                else {
+                    node.value = value;
+                    return node;
+                }
+            }
+            else {
+                this._size++;
+                return new Node(key, value);
+            }
+        }
+        insert(key, value) {
+            this._root = this._insert(this._root, key, value);
+        }
+        _remove(node, key) {
+            if (node) {
+                const cmp = this._compare(key, node.key);
+                if (cmp < 0) {
+                    node.left = this._remove(node.left, key);
+                    return this._rebalanceHeavyRight(node);
+                }
+                else if (cmp > 0) {
+                    node.right = this._remove(node.right, key);
+                    return this._rebalanceHeavyLeft(node);
+                }
+                else {
+                    this._size--;
+                    return null;
+                }
+            }
+            else {
+                return null;
+            }
+        }
+        remove(key) {
+            this._root = this._remove(this._root, key);
+        }
+    }
+    Darblast.AVL = AVL;
+})(Darblast || (Darblast = {})); // namespace Darblast
+const AVL = Darblast.AVL;
+var Darblast;
+(function (Darblast) {
     class Frame {
         constructor(source, width, height) {
             this.source = source;
@@ -83,7 +251,7 @@ var Darblast;
             }
             this.name = name;
             this.defaultState = defaultState;
-            for (var state in animations) {
+            for (const state in animations) {
                 if (animations.hasOwnProperty(state)) {
                     this.animations[state] = animations[state];
                 }
@@ -104,6 +272,111 @@ var Darblast;
     Darblast.Character = Character;
 })(Darblast || (Darblast = {})); // namespace Darblast
 const Character = Darblast.Character;
+/// <reference path="Base.ts" />
+/// <reference path="AVL.ts" />
+class Database {
+    constructor() {
+        this._data = Object.create(null);
+    }
+    static _compare(first, second) {
+        return first - second;
+    }
+    insert(properties, element) {
+        for (const key in properties) {
+            if (properties.hasOwnProperty(key)) {
+                if (!(key in this._data)) {
+                    this._data[key] = Object.create(null);
+                }
+                const value = properties[key];
+                if (!(value in this._data[key])) {
+                    this._data[key][value] = new AVL(Database._compare);
+                }
+                this._data[key][value].insert(element.id, element);
+            }
+        }
+    }
+    remove(properties) {
+        // TODO
+        throw new Error('not implemented');
+    }
+    *query(properties) {
+        const iterators = [];
+        for (const key in properties) {
+            if (properties.hasOwnProperty(key) && (key in this._data)) {
+                const value = properties[key];
+                if (value in this._data[key]) {
+                    iterators.push(this._data[key][value][Symbol.iterator]());
+                }
+            }
+        }
+        const result = [];
+        const items = iterators.map(it => it.next());
+        while (items.every(item => !item.done)) {
+            var minimum = null;
+            var everywhere = false;
+            for (var i = 0; i < items.length; i++) {
+                const [id, element] = items[i].value;
+                if (!minimum) {
+                    minimum = element;
+                    everywhere = true;
+                }
+                else if (id < minimum.id) {
+                    minimum = element;
+                    everywhere = false;
+                }
+            }
+            if (everywhere) {
+                yield minimum;
+            }
+            for (var i = 0; i < items.length; i++) {
+                const [id] = items[i].value;
+                if (id <= minimum.id) {
+                    items[i] = iterators[i].next();
+                }
+            }
+        }
+    }
+}
+var Darblast;
+(function (Darblast) {
+    class View {
+        constructor(matrix, width, height) {
+            this.x = 0;
+            this.y = 0;
+            if (matrix.length !== 3 || matrix.some(row => row.length !== 3)) {
+                throw Error('invalid matrix size, must be 3x3');
+            }
+            this.matrix = matrix;
+            this.width = width;
+            this.height = height;
+        }
+        project(projectable) {
+            const m = this.matrix;
+            projectable.x = projectable.i * m[0][0] + projectable.j * m[0][1] + projectable.k * m[0][2];
+            projectable.y = projectable.i * m[1][0] + projectable.j * m[1][1] + projectable.k * m[1][2];
+            projectable.z = projectable.i * m[2][0] + projectable.j * m[2][1] + projectable.k * m[2][2];
+        }
+    }
+    Darblast.View = View;
+})(Darblast || (Darblast = {})); // namespace Darblast
+const View = Darblast.View;
+class IdGenerator {
+    constructor() {
+        this._nextId = 0;
+        this._stash = [];
+    }
+    claim() {
+        if (this._stash.length > 0) {
+            return this._stash.pop();
+        }
+        else {
+            return this._nextId++;
+        }
+    }
+    release(id) {
+        this._stash.push(id);
+    }
+}
 var Darblast;
 (function (Darblast) {
     class Heap {
@@ -182,88 +455,6 @@ var Darblast;
     Darblast.Heap = Heap;
 })(Darblast || (Darblast = {})); // namespace Darblast
 const Heap = Darblast.Heap;
-/// <reference path="Base.ts" />
-/// <reference path="Heap.ts" />
-class Database {
-    constructor() {
-        this._data = Object.create(null);
-    }
-    static _compare(first, second) {
-        return first.id < second.id;
-    }
-    insert(properties, element) {
-        for (var key in properties) {
-            if (properties.hasOwnProperty(key)) {
-                if (!(key in this._data)) {
-                    this._data[key] = Object.create(null);
-                }
-                const value = properties[key];
-                if (!(value in this._data[key])) {
-                    this._data[key][value] = new Heap(Database._compare);
-                }
-                this._data[key][value].push(element);
-            }
-        }
-    }
-    remove(properties) {
-        // TODO
-        throw new Error('not implemented');
-    }
-    query(properties) {
-        const queues = [];
-        for (var key in properties) {
-            if (properties.hasOwnProperty(key) && (key in this._data)) {
-                const value = properties[key];
-                if (value in this._data[key]) {
-                    queues.push(this._data[key][value]);
-                }
-            }
-        }
-        const result = [];
-        // TODO
-        return result;
-    }
-}
-var Darblast;
-(function (Darblast) {
-    class View {
-        constructor(matrix, width, height) {
-            this.x = 0;
-            this.y = 0;
-            if (matrix.length !== 3 || matrix.some(row => row.length !== 3)) {
-                throw Error('invalid matrix size, must be 3x3');
-            }
-            this.matrix = matrix;
-            this.width = width;
-            this.height = height;
-        }
-        project(projectable) {
-            const m = this.matrix;
-            projectable.x = projectable.i * m[0][0] + projectable.j * m[0][1] + projectable.k * m[0][2];
-            projectable.y = projectable.i * m[1][0] + projectable.j * m[1][1] + projectable.k * m[1][2];
-            projectable.z = projectable.i * m[2][0] + projectable.j * m[2][1] + projectable.k * m[2][2];
-        }
-    }
-    Darblast.View = View;
-})(Darblast || (Darblast = {})); // namespace Darblast
-const View = Darblast.View;
-class IdGenerator {
-    constructor() {
-        this._nextId = 0;
-        this._stash = [];
-    }
-    claim() {
-        if (this._stash.length > 0) {
-            return this._stash.pop();
-        }
-        else {
-            return this._nextId++;
-        }
-    }
-    release(id) {
-        this._stash.push(id);
-    }
-}
 /// <reference path="IdGenerator.ts" />
 /// <reference path="View.ts" />
 /// <reference path="Character.ts" />
@@ -426,6 +617,17 @@ class ElementImpl {
         this._m10 = 0;
         this._m11 = 1;
         this._m12 = 0;
+        this._reindex();
+    }
+    rotate(angle, x, y) {
+        const sin = Math.sin(angle);
+        const cos = Math.cos(angle);
+        this._m00 = cos;
+        this._m01 = -sin;
+        this._m02 = x - x * cos + y * sin;
+        this._m10 = sin;
+        this._m11 = cos;
+        this._m12 = y - x * sin - y * cos;
         this._reindex();
     }
     getFrame(t) {
@@ -694,17 +896,14 @@ var Darblast;
         spawnDefault(character, i, j, k, properties = null) {
             return this.spawn(character, 'default', i, j, k);
         }
-        query(properties) {
+        *query(properties) {
             return this._database.query(properties);
         }
         queryFirst(properties) {
-            const elements = this.query(properties);
-            if (elements.length !== 1) {
-                throw new Error(`element not found for ${JSON.stringify(properties)}`);
+            for (const element of this.query(properties)) {
+                return element;
             }
-            else {
-                return elements[0];
-            }
+            throw new Error(`element not found for ${JSON.stringify(properties)}`);
         }
         render(canvas, t, parallax) {
             this._elements.render(canvas.context, this._view.x * parallax.x, this._view.y * parallax.y, this._view.width, this._view.height, t);

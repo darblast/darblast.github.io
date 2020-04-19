@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 
 import {
   Button,
@@ -18,6 +18,7 @@ import LayerControls from './LayerControls.jsx';
 
 
 export default function () {
+  const [loop, setLoop] = useState(null);
   return (
     <Container fluid className="p-0" style={{
       height: '100%',
@@ -43,7 +44,11 @@ export default function () {
           </Card>
         </Col>
         <Col>
-          <Canvas/>
+          <Canvas onReady={(canvas) => {
+            const loop = new window.Darblast.RenderLoop(canvas);
+            loop.start();
+            setLoop(loop);
+          }}/>
         </Col>
         <Col sm="auto" className="d-flex align-items-stretch">
           <Card className="rounded-0 border-top-0 border-right-0 border-bottom-0 shadow-sm">
