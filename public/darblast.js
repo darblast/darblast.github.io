@@ -171,6 +171,28 @@ var Darblast;
         remove(key) {
             this._root = this._remove(this._root, key);
         }
+        clear() {
+            this._root = null;
+            this._size = 0;
+        }
+        _clone(node) {
+            if (node) {
+                const result = new Node(node.key, node.value);
+                result.left = this._clone(node.left);
+                result.right = this._clone(node.right);
+                result.height = node.height;
+                return result;
+            }
+            else {
+                return null;
+            }
+        }
+        clone() {
+            const result = new AVL(this._compare);
+            result._root = this._clone(this._root);
+            result._size = this._size;
+            return result;
+        }
     }
     Darblast.AVL = AVL;
 })(Darblast || (Darblast = {})); // namespace Darblast
@@ -450,6 +472,11 @@ var Darblast;
         }
         clear() {
             this._data.length = 0;
+        }
+        clone() {
+            const result = new Heap(this._compare);
+            result._data.push.apply(result._data, this._data);
+            return result;
         }
     }
     Darblast.Heap = Heap;

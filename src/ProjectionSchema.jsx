@@ -1,6 +1,24 @@
 import React from 'react';
 
 
+function Gripper({color, left, top}, ...props) {
+  return (
+    <div style={{
+      position: 'absolute',
+      left: `${left}px`,
+      top: `${top}px`,
+    }}>
+      <div style={{
+        margin: '-50% 0 0 -50%',
+        width: '15px',
+        height: '15px',
+        backgroundColor: color,
+      }} {...props}></div>
+    </div>
+  );
+}
+
+
 class ProjectionSchema extends React.Component {
   constructor(props) {
     super(props);
@@ -32,12 +50,12 @@ class ProjectionSchema extends React.Component {
 
   componentDidUpdate() {
     const matrix = this.props.matrix;
-    this.grippers.i.current.style.left = `${matrix[0][0] + 75}px`;
-    this.grippers.i.current.style.top = `${matrix[1][0] + 75}px`;
-    this.grippers.j.current.style.left = `${matrix[0][1] + 75}px`;
-    this.grippers.j.current.style.top = `${matrix[1][1] + 75}px`;
-    this.grippers.k.current.style.left = `${matrix[0][2] + 75}px`;
-    this.grippers.k.current.style.top = `${matrix[1][2] + 75}px`;
+    this.grippers.i.current.left = `${matrix[0][0] + 75}px`;
+    this.grippers.i.current.top = `${matrix[1][0] + 75}px`;
+    this.grippers.j.current.left = `${matrix[0][1] + 75}px`;
+    this.grippers.j.current.top = `${matrix[1][1] + 75}px`;
+    this.grippers.k.current.left = `${matrix[0][2] + 75}px`;
+    this.grippers.k.current.top = `${matrix[1][2] + 75}px`;
   }
 
   componentWillUnmount() {
@@ -152,39 +170,21 @@ class ProjectionSchema extends React.Component {
           width: `150px`,
           height: `150px`,
         }}></canvas>
-        <div
+        <Gripper
+          color="#f00"
           ref={this.grippers.i}
           onMouseDown={() => this.setIGripperDragging(true)}
-          onMouseUp={() => this.setIGripperDragging(false)}
-          style={{
-            color: '#f00',
-            position: 'absolute',
-          }}
-        ><i className="fas fa-circle" style={{
-          margin: '-50% 0 0 -50%',
-        }}></i></div>
-        <div
+          onMouseUp={() => this.setIGripperDragging(false)}/>
+        <Gripper
+          color="#0f0"
           ref={this.grippers.j}
           onMouseDown={() => this.setJGripperDragging(true)}
-          onMouseUp={() => this.setJGripperDragging(false)}
-          style={{
-            color: '#0f0',
-            position: 'absolute',
-          }}
-        ><i className="fas fa-circle" style={{
-          margin: '-50% 0 0 -50%',
-        }}></i></div>
-        <div
+          onMouseUp={() => this.setJGripperDragging(false)}/>
+        <Gripper
+          color="#00f"
           ref={this.grippers.k}
           onMouseDown={() => this.setKGripperDragging(true)}
-          onMouseUp={() => this.setKGripperDragging(false)}
-          style={{
-            color: '#00f',
-            position: 'absolute',
-          }}
-        ><i className="fas fa-circle" style={{
-          margin: '-50% 0 0 -50%',
-        }}></i></div>
+          onMouseUp={() => this.setKGripperDragging(false)}/>
       </div>
     );
   }
